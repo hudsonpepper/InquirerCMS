@@ -1,0 +1,23 @@
+{
+  "name": "inquirercms",
+  "version": "1.0.0",
+  "description": "command line database control",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/hudsonpepper/InquirerCMS"
+  },
+  "keywords": [
+    "inquirer",
+    "sql"
+  ],
+  "author": "hudsonpepper",
+  "license": "ISC",
+  "dependencies": {
+    "inquirer": "^8.2.4",
+    "mysql2": "^3.6.5"
+  }
+}
