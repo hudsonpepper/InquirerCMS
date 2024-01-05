@@ -2,6 +2,7 @@
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const { Console } = require('console');
+require('dotenv').config();
 //const PORT = process.env.PORT || 3001;
 //const app = express();
 
@@ -9,13 +10,13 @@ const { Console } = require('console');
 //app.use(express.urlencoded({ extended: false }));
 //app.use(express.json());
 
-
+console.log(process.env)
 const db = mysql.createConnection(
   {
-    host: 'localhost',
-    user: 'root',
-    password: 'rootroot',
-    database: 'departments_db'
+    host: process.env.HOST,
+    user: process.env.USER,
+    password: process.env.PASSWORD,
+    database: process.env.DATABASE
   },
   console.log("Connected to the departments_db database.")
 );
