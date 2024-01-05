@@ -10,7 +10,7 @@ require('dotenv').config();
 //app.use(express.urlencoded({ extended: false }));
 //app.use(express.json());
 
-console.log(process.env)
+//console.log(process.env)
 const db = mysql.createConnection(
   {
     host: process.env.HOST,
@@ -74,14 +74,23 @@ function viewAllEmployees() {
   return results;
 };
 function addEmployee() {
-  viewManagerNamesPromise().then((data) => {
+  viewEmployeeNamesPromise()
+  .then((data) => {
     console.log(data)
-    let nameArr = data[0].map((x) => `${x.first_name} ${x.last_name}`);
-    console.log(nameArr);
-    console.log(concatNames(data));
+    let potManagerArr = data[0].map((x) => `${x.first_name} ${x.last_name}`);
+    console.log(potManagerArr);
     //init();
-    return (nameArr)
-  }).then((rolesArr, potManagerArr) => {
+    return (potManagerArr)
+  }).then((potNamesArr) => {
+    return viewRolesPromise(potNamesArr)})
+    .then((dataArr) => {
+      console.log("DataArr", dataArr)
+      let rolesArr = dataArr[0].map((x) => x.title);
+      let potManagerArr = dataArr[1]
+      console.log(potManagerArr, rolesArr);
+      return (potManagerArr, rolesArr);
+    })
+    .then((potManagerArr, rolesArr) => {
     inquirer
       .prompt([
         {
@@ -111,7 +120,10 @@ function viewManagerNamesPromise() {
   let results = db.promise().query(`SELECT employee.first_name, employee.last_name FROM employee WHERE employee.id IN (SELECT employee.manager_id FROM employee)`);
   return results;
 }
-
+function viewRolesPromise(params) {
+  let results = db.promise().query(`SELECT title FROM role`)
+  return [results, params];
+}
 function concatNames(data) {
   let nameArr = data[0].map((x) => `${x.first_name} ${x.last_name}`);
   return nameArr;
