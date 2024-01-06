@@ -35,78 +35,12 @@ const dbHelper = (function () {
     })
     return results;
   }
-  return ({ viewAllEmployees, getEmployeeNames, getManagerNames, getRoleNames })
+  function viewAllRoles() {
+    let results = db.promise().query(`SELECT role.title, (SELECT department.dep_name FROM department WHERE department.id = role.department_id) AS department FROM role;`)
+    return results;
+  };
+  return ({ viewAllEmployees, getEmployeeNames, getManagerNames, getRoleNames, viewAllRoles })
 })();
-// dbHelper.viewAllEmployees().then((data) => {
-//   console.table(data[0]);})
-// dbHelper.getEmployeeNames().then((data) => {
-//   //console.table((data[0]));
-//   console.log(data);
-  //let names = [data[0].map((x) => x.full_name), data[0].map((x) => x.id)];
-  //console.log(names);
-  //return names;
-//});
 
 
 module.exports = dbHelper;
-
-
-
-
-// function addEmployee() {
-//   viewEmployeeNamesPromise()
-//   .then((data) => {
-//     console.log(data)
-//     let potManagerArr = data[0].map((x) => `${x.first_name} ${x.last_name}`);
-//     console.log(potManagerArr);
-//     //init();
-//     return (potManagerArr)
-//   }).then((potNamesArr) => {
-//     return viewRolesPromise(potNamesArr)})
-//     .then((dataArr) => {
-//       console.log("DataArr", dataArr)
-//       let rolesArr = dataArr[0].map((x) => x.title);
-//       let potManagerArr = dataArr[1]
-//       console.log(potManagerArr, rolesArr);
-//       return (potManagerArr, rolesArr);
-//     })
-//     .then((potManagerArr, rolesArr) => {
-//     inquirer
-//       .prompt([
-//         {
-//           type: 'input',
-//           name: 'first_name',
-//           message: "Enter employee's first name: ",
-//           validate(input) {
-//             return input.length > 0;
-//           }
-//         },
-//         {
-//           type: 'input',
-//           name: 'last_name',
-//           message: "Enter employee's last name: ",
-//           validate(input) {
-//             return input.length > 0;
-//           }
-//         }
-//       ])
-//   })
-// }
-// function viewEmployeeNamesPromise() {
-//   let results = db.promise().query(`SELECT employee.first_name, employee.last_name FROM employee`)
-//   return results;
-// }
-// function viewManagerNamesPromise() {
-//   let results = db.promise().query(`SELECT employee.first_name, employee.last_name FROM employee WHERE employee.id IN (SELECT employee.manager_id FROM employee)`);
-//   return results;
-// }
-// function viewRolesPromise(params) {
-//   let results = db.promise().query(`SELECT title FROM role`).then((data) => {
-//     data[0].map((x) => x.title);
-//   }).then
-//   return results;
-// }
-// function concatNames(data) {
-//   let nameArr = data[0].map((x) => `${x.first_name} ${x.last_name}`);
-//   return nameArr;
-// }

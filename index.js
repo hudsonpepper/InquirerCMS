@@ -12,6 +12,8 @@ require('dotenv').config();
 //app.use(express.json());
 
 //console.log(process.env)
+
+console.log(" \n Please wait, we are connecting to the database...")
 const db = mysql.createConnection(
   {
     host: process.env.HOST,
@@ -19,7 +21,7 @@ const db = mysql.createConnection(
     password: process.env.PASSWORD,
     database: process.env.DATABASE
   },
-  console.log("Connected to the departments_db database.")
+  console.log(" --------------- \n Connected to the departments_db database! \n --------------- \n ")
 );
 
 async function init() {
@@ -32,7 +34,8 @@ async function init() {
         choices: ['View All Employees', 'Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'Exit']
       }
     ]).then(async (response) => {
-      console.log(response);
+      //console.log(response);
+      console.log("\n --------------- \n")
       switch (response.actionSelection) {
         case 'View All Employees':
           console.log('You selected "View All Employees"');
@@ -43,14 +46,18 @@ async function init() {
           break;
         case 'Add Employee':
           console.log('You Selected "Add Employee"');
-          // Needed: Employee First Name, Last Name, Role ID, Manager ID
           addEmployee();
           break;
         case 'Update Employee Role':
           console.log('You selected "Update Employee Role"');
+          updateRole();
           break;
         case 'View All Roles':
           console.log('You selected "View All Roles"');
+          dbHelper.viewAllRoles().then((data) => {
+            console.table(data[0]);
+            rerun();
+          })
           break;
         case 'Add Role':
           console.log('You selected "Add Role"');
@@ -132,12 +139,45 @@ async function addEmployee() {
         let process = db.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`, [data.first_name, data.last_name, data.role_id, data.manager_id])
         return process
       }).then((process) => {
-        console.log("Added Employee")
+        console.log(" \n --------------- \n Added Employee")
         rerun();
       })
   });
 }
 
+async function updateRole() {
+  let employeeNames = dbHelper.getEmployeeNames();
+  let roleNames = dbHelper.getRoleNames();
+  Promise.all([employeeNames, roleNames])
+    .then(([employeeNames, roleNames]) => {
+      inquirer
+        .prompt([{
+          type: 'list',
+          name: 'employee',
+          message: "Choose employee: ",
+          choices: employeeNames[0]
+        },
+        {
+          type: 'list',
+          name: 'role',
+          message: "Choose updated employee job title: ",
+          choices: roleNames[0]
+        }
+        ])
+        .then((data) => {
+          data.role_id = roleNames[1][roleNames[0].indexOf(data.role)];
+          delete data.role;
+          data.id = employeeNames[1][employeeNames[0].indexOf(data.employee)];
+          delete data.employee;
+          let update = db.promise().query("UPDATE employee SET role_id = ? WHERE id = ?", [data.role_id, data.id]);
+          return update
+        })
+        .then((update) => {
+          console.log("\n -------------- \n Success!!");
+          rerun();
+        })
+    })
+}
 init();
 
 //process.exit();
