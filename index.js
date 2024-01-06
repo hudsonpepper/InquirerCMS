@@ -1,4 +1,5 @@
 //const express = require('express');
+const dbHelper = require('./dbHelper');
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const { Console } = require('console');
@@ -35,13 +36,14 @@ async function init() {
       switch (response.actionSelection) {
         case 'View All Employees':
           console.log('You selected "View All Employees"');
-          viewAllEmployees().then((data) => {
+          dbHelper.viewAllEmployees().then((data) => {
             console.table(data[0]);
-            init();
+            rerun();
           })
           break;
         case 'Add Employee':
           console.log('You Selected "Add Employee"');
+          // Needed: Employee First Name, Last Name, Role ID, Manager ID
           addEmployee();
           break;
         case 'Update Employee Role':
@@ -67,30 +69,28 @@ async function init() {
       }
     })//.then(init)
 }
-init();
 
-function viewAllEmployees() {
-  let results = db.promise().query(`SELECT A.id, A.first_name, A.last_name, B.first_name AS Manager_FName, B.last_name AS Manager_LName FROM employee A, employee B WHERE A.manager_id = B.id`)
-  return results;
-};
-function addEmployee() {
-  viewEmployeeNamesPromise()
-  .then((data) => {
-    console.log(data)
-    let potManagerArr = data[0].map((x) => `${x.first_name} ${x.last_name}`);
-    console.log(potManagerArr);
-    //init();
-    return (potManagerArr)
-  }).then((potNamesArr) => {
-    return viewRolesPromise(potNamesArr)})
-    .then((dataArr) => {
-      console.log("DataArr", dataArr)
-      let rolesArr = dataArr[0].map((x) => x.title);
-      let potManagerArr = dataArr[1]
-      console.log(potManagerArr, rolesArr);
-      return (potManagerArr, rolesArr);
+function rerun() {
+  console.log("\n===================\n")
+  inquirer
+    .prompt([{
+      type: 'list',
+      name: 'isDone',
+      message: 'Are you done?',
+      choices: ['Yes', 'No']
+    }]).then((response) => {
+      if (response.isDone == 'Yes') {
+        console.log("Bye!");
+        process.exit()
+      }
+      else { init() }
     })
-    .then((potManagerArr, rolesArr) => {
+}
+
+async function addEmployee() {
+  let employeeNames = dbHelper.getEmployeeNames();
+  let roleNames = dbHelper.getRoleNames();
+  Promise.all([employeeNames, roleNames]).then(([employeeNames, roleNames]) => {
     inquirer
       .prompt([
         {
@@ -108,23 +108,36 @@ function addEmployee() {
           validate(input) {
             return input.length > 0;
           }
+        },
+        {
+          type: 'list',
+          name: 'role',
+          message: "Choose employee job title: ",
+          choices: roleNames[0]
+        },
+        {
+          type: 'list',
+          name: 'manager',
+          message: "Choose employee manager: ",
+          choices: ["N/A", ...employeeNames[0]]
         }
-      ])
-  })
+      ]).then((data) => {
+        data.role_id = roleNames[1][roleNames[0].indexOf(data.role)];
+        delete data.role;
+        data.manager == "N/A" ? data.manager_id = null : data.manager_id = employeeNames[1][employeeNames[0].indexOf(data.manager)];
+        delete data.manager;
+        return data;
+
+      }).then((data) => {
+        let process = db.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`, [data.first_name, data.last_name, data.role_id, data.manager_id])
+        return process
+      }).then((process) => {
+        console.log("Added Employee")
+        rerun();
+      })
+  });
 }
-function viewEmployeeNamesPromise() {
-  let results = db.promise().query(`SELECT employee.first_name, employee.last_name FROM employee`)
-  return results;
-}
-function viewManagerNamesPromise() {
-  let results = db.promise().query(`SELECT employee.first_name, employee.last_name FROM employee WHERE employee.id IN (SELECT employee.manager_id FROM employee)`);
-  return results;
-}
-function viewRolesPromise(params) {
-  let results = db.promise().query(`SELECT title FROM role`)
-  return [results, params];
-}
-function concatNames(data) {
-  let nameArr = data[0].map((x) => `${x.first_name} ${x.last_name}`);
-  return nameArr;
-}
+
+init();
+
+//process.exit();
