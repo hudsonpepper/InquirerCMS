@@ -34,12 +34,24 @@ const dbHelper = (function () {
       return names;
     })
     return results;
+  };
+  function getDepartmentNames() {
+    let results = db.promise().query(`SELECT department.id, department.dep_name FROM department`)
+    .then((data) => {
+      let names = [data[0].map((x) => x.dep_name), data[0].map((x) => x.id)];
+      return names;
+    })
+    return results;
   }
+  function viewAllDepartments() {
+    let results = db.promise().query(`SELECT department.dep_name, department.id FROM department`);
+    return results;
+  };
   function viewAllRoles() {
     let results = db.promise().query(`SELECT role.title, (SELECT department.dep_name FROM department WHERE department.id = role.department_id) AS department FROM role;`)
     return results;
   };
-  return ({ viewAllEmployees, getEmployeeNames, getManagerNames, getRoleNames, viewAllRoles })
+  return ({viewAllDepartments, viewAllEmployees, getEmployeeNames, getManagerNames, getRoleNames, viewAllRoles, getDepartmentNames })
 })();
 
 

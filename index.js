@@ -1,17 +1,9 @@
-//const express = require('express');
 const dbHelper = require('./dbHelper');
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const { Console } = require('console');
 require('dotenv').config();
-//const PORT = process.env.PORT || 3001;
-//const app = express();
 
-
-//app.use(express.urlencoded({ extended: false }));
-//app.use(express.json());
-
-//console.log(process.env)
 
 console.log(" \n Please wait, we are connecting to the database...")
 const db = mysql.createConnection(
@@ -31,10 +23,9 @@ async function init() {
         type: 'list',
         name: 'actionSelection',
         message: 'What would you like to do?',
-        choices: ['View All Employees', 'Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'Exit']
+        choices: ['View All Employees', 'View All Roles', 'View All Departments', 'Add Employee', 'Add Role', 'Add Department', 'Update Employee Role', 'Exit']
       }
     ]).then(async (response) => {
-      //console.log(response);
       console.log("\n --------------- \n")
       switch (response.actionSelection) {
         case 'View All Employees':
@@ -44,14 +35,6 @@ async function init() {
             rerun();
           })
           break;
-        case 'Add Employee':
-          console.log('You Selected "Add Employee"');
-          addEmployee();
-          break;
-        case 'Update Employee Role':
-          console.log('You selected "Update Employee Role"');
-          updateRole();
-          break;
         case 'View All Roles':
           console.log('You selected "View All Roles"');
           dbHelper.viewAllRoles().then((data) => {
@@ -59,14 +42,28 @@ async function init() {
             rerun();
           })
           break;
-        case 'Add Role':
-          console.log('You selected "Add Role"');
-          break;
         case 'View All Departments':
           console.log('You selected "View All Departments"');
+          dbHelper.viewAllDepartments().then((data) => {
+            console.table(data[0]);
+            rerun();
+          })
+          break;
+        case 'Add Employee':
+          console.log('You Selected "Add Employee"');
+          addEmployee();
+          break;
+        case 'Add Role':
+          console.log('You selected "Add Role"');
+          addRole();
           break;
         case 'Add Department':
           console.log('You selected "Add Department"');
+          addDepartment();
+          break;
+        case 'Update Employee Role':
+          console.log('You selected "Update Employee Role"');
+          updateRole();
           break;
         case 'Exit':
           console.log("Bye!");
@@ -144,6 +141,67 @@ async function addEmployee() {
       })
   });
 }
+async function addRole() {
+  let departmentNames = dbHelper.getDepartmentNames();
+  Promise.all([departmentNames]).then(([departmentNames]) => {
+    inquirer
+      .prompt([
+        {
+          type: 'input',
+          name: 'title',
+          message: "Enter new title: ",
+          validate(input) {
+            return input.length > 0;
+          }
+        },
+        {
+          type: 'input',
+          name: 'salary',
+          message: "Enter salary: ",
+          validate(input) {
+            return !isNaN(input);
+          }
+        },
+        {
+          type: 'list',
+          name: 'department',
+          message: "Choose the department this role will be under: ",
+          choices: departmentNames[0]
+        }
+      ]).then((data) => {
+        data.department_id = departmentNames[1][departmentNames[0].indexOf(data.department)];
+        delete data.department;
+        return data;
+
+      }).then((data) => {
+        let process = db.promise().query(`INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`, [data.title, data.salary, data.department_id])
+        return process;
+      }).then((process) => {
+        console.log(" \n --------------- \n Added Role")
+        rerun();
+      })
+  });
+}
+async function addDepartment() {
+  inquirer
+    .prompt([
+      {
+        type: 'input',
+        name: 'dep_name',
+        message: "Enter new department name: ",
+        validate(input) {
+          return input.length > 0;
+        }
+      }
+    ])
+    .then((data) => {
+      let process = db.promise().query(`INSERT INTO department (dep_name) VALUES (?)`, data.dep_name)
+      return process;
+    }).then((process) => {
+      console.log(" \n --------------- \n Added Department")
+      rerun();
+    })
+}
 
 async function updateRole() {
   let employeeNames = dbHelper.getEmployeeNames();
@@ -178,6 +236,9 @@ async function updateRole() {
         })
     })
 }
+
+
+
 init();
 
 //process.exit();
