@@ -5,6 +5,8 @@
 
 This project is a command-line content management system (cms) which itilizes the inquirer npm package to navigate.
 
+To see a walkthrough video, click [here](https://screenrec.com/share/ZSsuKnWiwc).
+
   
 ## Table of Contents
 
